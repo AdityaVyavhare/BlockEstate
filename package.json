@@ -1,0 +1,47 @@
+{
+  "name": "block-estate",
+  "version": "1.0.0",
+  "description": "Cross-Chain Real Estate NFT Marketplace with CCIP Bridge, BRT Token Payments, and Majority Voting Validation (Sepolia <-> Amoy)",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deployAllChains.js",
+    "deploy:token": "hardhat run scripts/deployToken.js",
+    "deploy:nft": "hardhat run scripts/deployNFT.js",
+    "deploy:verification": "hardhat run scripts/deployVerification.js",
+    "deploy:marketplace": "hardhat run scripts/deployMarketplace.js",
+    "deploy:bridge": "hardhat run scripts/deployBridge.js",
+    "update-frontend": "node scripts/updateConfigAndABI.js",
+    "e2e:ccip": "hardhat run scripts/e2eCrossChainBuy.js",
+    "fund:link": "hardhat run scripts/fundBridgeLink.js",
+    "bridge:trust": "hardhat run scripts/setTrustedBridges.js"
+  },
+  "dependencies": {
+    "@chainlink/contracts-ccip": "^1.4.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^16.3.1",
+    "ethers": "^5.7.2"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "@types/chai": "^4.2.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.3.3",
+    "chai": "^4.3.7",
+    "ethereum-waffle": "^4.0.10",
+    "hardhat": "^2.19.0",
+    "hardhat-gas-reporter": "^1.0.8",
+    "solidity-coverage": "^0.8.1",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.0",
+    "typescript": "^5.9.3"
+  }
+}
