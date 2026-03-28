@@ -1,4 +1,4 @@
-# RealEstateNFT — Cross-Chain Real Estate Marketplace
+# BlockEstate — Cross-Chain Real Estate Marketplace
 
 A decentralized cross-chain real estate NFT marketplace using Chainlink CCIP for direct NFT transfer, BRT (ERC20) token payments, and majority-based validator verification. Works across:
 
@@ -26,7 +26,7 @@ A decentralized cross-chain real estate NFT marketplace using Chainlink CCIP for
 ### 1) Contracts + tests (Hardhat)
 
 ```bash
-cd e:\BlockChain\RealEstateNFT
+cd e:\BlockChain\BlockEstate
 npm install
 ```
 
@@ -41,7 +41,7 @@ Create a `.env` file (based on `.env.example`) in the repo root:
 ### 2) Frontend (Next.js)
 
 ```bash
-cd e:\BlockChain\RealEstateNFT\frontend
+cd e:\BlockChain\BlockEstate\frontend
 npm install
 ```
 
@@ -88,7 +88,7 @@ node scripts/updateConfigAndABI.js
 ## Running the frontend
 
 ```bash
-cd e:\BlockChain\RealEstateNFT\frontend
+cd e:\BlockChain\BlockEstate\frontend
 npm run dev
 ```
 
@@ -103,4 +103,3 @@ Then open the displayed local URL.
   - validators register
   - each validator votes once per property
   - verified outcome is based on majority threshold
-
