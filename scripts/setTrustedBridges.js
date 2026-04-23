@@ -41,7 +41,10 @@ function bnMax(a, b) {
 
 function clampAmoyGas(gas) {
   return {
-    maxPriorityFeePerGas: bnMax(gas.maxPriorityFeePerGas, AMOY_MIN_PRIORITY_WEI),
+    maxPriorityFeePerGas: bnMax(
+      gas.maxPriorityFeePerGas,
+      AMOY_MIN_PRIORITY_WEI,
+    ),
     maxFeePerGas: bnMax(gas.maxFeePerGas, AMOY_MIN_MAX_FEE_WEI),
   };
 }
@@ -62,7 +65,7 @@ async function fetchAmoyGas() {
             resolve({
               maxPriorityFeePerGas: ethers.utils.parseUnits(
                 String(priorityFee),
-                "gwei"
+                "gwei",
               ),
               maxFeePerGas: ethers.utils.parseUnits(String(maxFee), "gwei"),
             });
@@ -82,15 +85,23 @@ async function getAmoyTxOverrides() {
     const raw = await fetchAmoyGas();
     const gas = clampAmoyGas(raw);
     console.log(
-      `      Amoy gas: maxFee ${ethers.utils.formatUnits(gas.maxFeePerGas, "gwei")} gwei (tip ${ethers.utils.formatUnits(gas.maxPriorityFeePerGas, "gwei")} gwei)`
+      `      Amoy gas: maxFee ${ethers.utils.formatUnits(
+        gas.maxFeePerGas,
+        "gwei",
+      )} gwei (tip ${ethers.utils.formatUnits(
+        gas.maxPriorityFeePerGas,
+        "gwei",
+      )} gwei)`,
     );
     return { ...base, ...gas };
   } catch (e) {
     console.warn(
-      `      Gas Station failed (${e.message}), using ${ethers.utils.formatUnits(
+      `      Gas Station failed (${
+        e.message
+      }), using ${ethers.utils.formatUnits(
         AMOY_FALLBACK_GAS,
-        "gwei"
-      )} gwei fallback`
+        "gwei",
+      )} gwei fallback`,
     );
     return {
       ...base,
@@ -105,7 +116,7 @@ async function getAmoyTxOverrides() {
 function loadArtifact(contractName) {
   const artifactPath = path.resolve(
     __dirname,
-    `../artifacts/contracts/${contractName}.sol/${contractName}.json`
+    `../artifacts/contracts/${contractName}.sol/${contractName}.json`,
   );
   if (!fs.existsSync(artifactPath)) {
     throw new Error(`Missing ${artifactPath}. Run: npx hardhat compile`);
@@ -140,14 +151,18 @@ async function main() {
   const sepoliaBridgeAddr = config.sepolia?.CCIPBridge;
   const amoyBridgeAddr = config.amoy?.CCIPBridge;
   if (!sepoliaBridgeAddr || !amoyBridgeAddr) {
-    throw new Error("config.json must have sepolia.CCIPBridge and amoy.CCIPBridge");
+    throw new Error(
+      "config.json must have sepolia.CCIPBridge and amoy.CCIPBridge",
+    );
   }
 
   const abi = loadArtifact("CCIPBridge").abi;
   const sepSel = ethers.BigNumber.from(NETWORKS.sepolia.chainSelector);
   const amoySel = ethers.BigNumber.from(NETWORKS.amoy.chainSelector);
 
-  const sepoliaProvider = new ethers.providers.JsonRpcProvider(NETWORKS.sepolia.rpc);
+  const sepoliaProvider = new ethers.providers.JsonRpcProvider(
+    NETWORKS.sepolia.rpc,
+  );
   const amoyProvider = new ethers.providers.JsonRpcProvider(NETWORKS.amoy.rpc);
   const sepoliaWallet = new ethers.Wallet(PRIVATE_KEY, sepoliaProvider);
   const amoyWallet = new ethers.Wallet(PRIVATE_KEY, amoyProvider);
@@ -157,15 +172,21 @@ async function main() {
   console.log(`Amoy CCIPBridge:    ${amoyBridgeAddr}`);
   const polBal = await amoyProvider.getBalance(amoyWallet.address);
   console.log(
-    `Amoy POL balance:   ${ethers.utils.formatEther(polBal)} (need gas for tx #2)\n`
+    `Amoy POL balance:   ${ethers.utils.formatEther(
+      polBal,
+    )} (need gas for tx #2)\n`,
   );
   if (polBal.lt(ethers.utils.parseEther("0.01"))) {
     console.warn(
-      "  [!] Very low POL on Amoy — fund the deployer with testnet POL, then retry.\n"
+      "  [!] Very low POL on Amoy — fund the deployer with testnet POL, then retry.\n",
     );
   }
 
-  const sepoliaBridge = new ethers.Contract(sepoliaBridgeAddr, abi, sepoliaWallet);
+  const sepoliaBridge = new ethers.Contract(
+    sepoliaBridgeAddr,
+    abi,
+    sepoliaWallet,
+  );
   const amoyBridge = new ethers.Contract(amoyBridgeAddr, abi, amoyWallet);
 
   if (!skipSepolia) {
@@ -191,7 +212,7 @@ async function main() {
       let tx = await amoyBridge.setTrustedBridge(
         sepSel,
         sepoliaBridgeAddr,
-        amoyOpts
+        amoyOpts,
       );
       console.log(`      submitted ${tx.hash}`);
       await tx.wait();
@@ -200,7 +221,7 @@ async function main() {
       console.error("\nAmoy tx failed:", formatErr(e));
       console.error(
         "\nTips: fund deployer with POL on Amoy; try another AMOY_RPC; retry only Amoy:\n" +
-          "  SKIP_SEPOLIA=1 npx hardhat run scripts/setTrustedBridges.js\n"
+          "  SKIP_SEPOLIA=1 npx hardhat run scripts/setTrustedBridges.js\n",
       );
       throw e;
     }
@@ -214,12 +235,18 @@ async function main() {
   console.log(`  Sepolia.trustedBridges(Amoy): ${checkSep}`);
   console.log(`  Amoy.trustedBridges(Sepolia):   ${checkAmoy}`);
   if (checkSep.toLowerCase() !== amoyBridgeAddr.toLowerCase()) {
-    throw new Error("Sepolia trust mismatch — run without SKIP_SEPOLIA if needed");
+    throw new Error(
+      "Sepolia trust mismatch — run without SKIP_SEPOLIA if needed",
+    );
   }
   if (checkAmoy.toLowerCase() !== sepoliaBridgeAddr.toLowerCase()) {
-    throw new Error("Amoy trust mismatch — run with SKIP_SEPOLIA=1 to retry only Amoy");
+    throw new Error(
+      "Amoy trust mismatch — run with SKIP_SEPOLIA=1 to retry only Amoy",
+    );
   }
-  console.log("\nDone. Re-run: npx hardhat run scripts/e2eCrossChainBuy.js --network amoy");
+  console.log(
+    "\nDone. Re-run: npx hardhat run scripts/e2eCrossChainBuy.js --network amoy",
+  );
 }
 
 main().catch((e) => {

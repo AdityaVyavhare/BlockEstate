@@ -39,7 +39,10 @@ describe("Real Estate NFT Marketplace", function () {
 
     // Deploy Verification
     const Verification = await ethers.getContractFactory("Verification");
-    verification = await Verification.deploy(propertyNFT.address, brtToken.address);
+    verification = await Verification.deploy(
+      propertyNFT.address,
+      brtToken.address,
+    );
     await verification.deployed();
 
     // Deploy Marketplace
@@ -47,7 +50,7 @@ describe("Real Estate NFT Marketplace", function () {
     marketplace = await Marketplace.deploy(
       brtToken.address,
       propertyNFT.address,
-      verification.address
+      verification.address,
     );
     await marketplace.deployed();
 
@@ -71,7 +74,7 @@ describe("Real Estate NFT Marketplace", function () {
       verification.address,
       mockRouter.address,
       SEPOLIA_SELECTOR_BN,
-      linkToken.address
+      linkToken.address,
     );
     await ccipBridgeSrc.deployed();
 
@@ -129,7 +132,7 @@ describe("Real Estate NFT Marketplace", function () {
       await expect(
         brtToken
           .connect(buyer)
-          .mint(buyer.address, ethers.utils.parseEther("100"))
+          .mint(buyer.address, ethers.utils.parseEther("100")),
       ).to.be.revertedWith("Not authorized");
     });
 
@@ -140,7 +143,7 @@ describe("Real Estate NFT Marketplace", function () {
         .connect(seller)
         .transferFrom(buyer.address, seller.address, amount);
       expect(await brtToken.balanceOf(seller.address)).to.equal(
-        MINT_AMOUNT.add(amount)
+        MINT_AMOUNT.add(amount),
       );
     });
 
@@ -183,7 +186,7 @@ describe("Real Estate NFT Marketplace", function () {
 
     it("should reject minting with empty CID", async function () {
       await expect(
-        propertyNFT.mintProperty(seller.address, "")
+        propertyNFT.mintProperty(seller.address, ""),
       ).to.be.revertedWith("Empty CID");
     });
 
@@ -196,14 +199,14 @@ describe("Real Estate NFT Marketplace", function () {
     it("should only allow verification contract to set verified", async function () {
       await propertyNFT.mintProperty(seller.address, metadataCID);
       await expect(propertyNFT.setVerified(1, true)).to.be.revertedWith(
-        "Only verification contract"
+        "Only verification contract",
       );
     });
 
     it("should only allow marketplace/bridge to transfer", async function () {
       await propertyNFT.mintProperty(seller.address, metadataCID);
       await expect(
-        propertyNFT.transferProperty(seller.address, buyer.address, 1)
+        propertyNFT.transferProperty(seller.address, buyer.address, 1),
       ).to.be.revertedWith("Only marketplace or bridge");
     });
   });
@@ -218,12 +221,11 @@ describe("Real Estate NFT Marketplace", function () {
     beforeEach(async function () {
       const tx = await propertyNFT.mintProperty(
         seller.address,
-        "QmTestProperty"
+        "QmTestProperty",
       );
       const receipt = await tx.wait();
-      tokenId = receipt.events.find(
-        (e) => e.event === "PropertyMinted"
-      ).args.tokenId;
+      tokenId = receipt.events.find((e) => e.event === "PropertyMinted").args
+        .tokenId;
     });
 
     it("should add validators", async function () {
@@ -240,7 +242,7 @@ describe("Real Estate NFT Marketplace", function () {
 
     it("should reject adding duplicate validator", async function () {
       await expect(
-        verification.addValidator(validator1.address)
+        verification.addValidator(validator1.address),
       ).to.be.revertedWith("Already a validator");
     });
 
@@ -265,13 +267,13 @@ describe("Real Estate NFT Marketplace", function () {
     it("should prevent double voting", async function () {
       await verification.connect(validator1).vote(tokenId, true);
       await expect(
-        verification.connect(validator1).vote(tokenId, true)
+        verification.connect(validator1).vote(tokenId, true),
       ).to.be.revertedWith("Already voted");
     });
 
     it("should reject vote from non-validator", async function () {
       await expect(
-        verification.connect(buyer).vote(tokenId, true)
+        verification.connect(buyer).vote(tokenId, true),
       ).to.be.revertedWith("Not a validator");
     });
 
@@ -279,8 +281,9 @@ describe("Real Estate NFT Marketplace", function () {
       await verification.connect(validator1).vote(tokenId, true);
       await verification.connect(validator2).vote(tokenId, true);
 
-      const [approvals, , finalized] =
-        await verification.getVerificationStatus(tokenId);
+      const [approvals, , finalized] = await verification.getVerificationStatus(
+        tokenId,
+      );
       expect(approvals).to.equal(2);
       expect(finalized).to.be.true;
       expect(await propertyNFT.isVerified(tokenId)).to.be.true;
@@ -300,8 +303,9 @@ describe("Real Estate NFT Marketplace", function () {
     it("should not verify with only 1 of 3 approvals", async function () {
       await verification.connect(validator1).vote(tokenId, true);
 
-      const [approvals, , finalized] =
-        await verification.getVerificationStatus(tokenId);
+      const [approvals, , finalized] = await verification.getVerificationStatus(
+        tokenId,
+      );
       expect(approvals).to.equal(1);
       expect(finalized).to.be.false;
     });
@@ -310,7 +314,7 @@ describe("Real Estate NFT Marketplace", function () {
       await verification.connect(validator1).vote(tokenId, true);
       await verification.connect(validator2).vote(tokenId, true);
       await expect(
-        verification.connect(validator3).vote(tokenId, true)
+        verification.connect(validator3).vote(tokenId, true),
       ).to.be.revertedWith("Already finalized");
     });
 
@@ -332,10 +336,10 @@ describe("Real Estate NFT Marketplace", function () {
 
       // Both approvers should receive 10 BRT each
       expect(await brtToken.balanceOf(validator1.address)).to.equal(
-        v1Before.add(rewardPerVote)
+        v1Before.add(rewardPerVote),
       );
       expect(await brtToken.balanceOf(validator2.address)).to.equal(
-        v2Before.add(rewardPerVote)
+        v2Before.add(rewardPerVote),
       );
     });
   });
@@ -350,12 +354,11 @@ describe("Real Estate NFT Marketplace", function () {
     beforeEach(async function () {
       const tx = await propertyNFT.mintProperty(
         seller.address,
-        "QmMarketProperty"
+        "QmMarketProperty",
       );
       const receipt = await tx.wait();
-      tokenId = receipt.events.find(
-        (e) => e.event === "PropertyMinted"
-      ).args.tokenId;
+      tokenId = receipt.events.find((e) => e.event === "PropertyMinted").args
+        .tokenId;
 
       // Verify the property (2 of 3 validators)
       await verification.connect(validator1).vote(tokenId, true);
@@ -365,7 +368,7 @@ describe("Real Estate NFT Marketplace", function () {
     it("should list a verified property", async function () {
       await marketplace.connect(seller).listProperty(tokenId, PROPERTY_PRICE);
       const [listedSeller, price, active] = await marketplace.getListing(
-        tokenId
+        tokenId,
       );
       expect(listedSeller).to.equal(seller.address);
       expect(price).to.equal(PROPERTY_PRICE);
@@ -375,27 +378,27 @@ describe("Real Estate NFT Marketplace", function () {
     it("should reject listing unverified property", async function () {
       const tx2 = await propertyNFT.mintProperty(
         seller.address,
-        "QmUnverified"
+        "QmUnverified",
       );
       const receipt2 = await tx2.wait();
       const unverifiedId = receipt2.events.find(
-        (e) => e.event === "PropertyMinted"
+        (e) => e.event === "PropertyMinted",
       ).args.tokenId;
 
       await expect(
-        marketplace.connect(seller).listProperty(unverifiedId, PROPERTY_PRICE)
-      ).to.be.revertedWith("Property not verified");
+        marketplace.connect(seller).listProperty(unverifiedId, PROPERTY_PRICE),
+      ).to.be.revertedWith("Not tradable");
     });
 
     it("should reject listing by non-owner", async function () {
       await expect(
-        marketplace.connect(buyer).listProperty(tokenId, PROPERTY_PRICE)
+        marketplace.connect(buyer).listProperty(tokenId, PROPERTY_PRICE),
       ).to.be.revertedWith("Not the owner");
     });
 
     it("should reject listing with zero price", async function () {
       await expect(
-        marketplace.connect(seller).listProperty(tokenId, 0)
+        marketplace.connect(seller).listProperty(tokenId, 0),
       ).to.be.revertedWith("Price must be > 0");
     });
 
@@ -427,10 +430,10 @@ describe("Real Estate NFT Marketplace", function () {
       const sellerAmount = PROPERTY_PRICE.sub(fee);
 
       expect(await brtToken.balanceOf(seller.address)).to.equal(
-        sellerBefore.add(sellerAmount)
+        sellerBefore.add(sellerAmount),
       );
       expect(await brtToken.balanceOf(owner.address)).to.equal(
-        ownerBefore.add(fee)
+        ownerBefore.add(fee),
       );
     });
 
@@ -441,7 +444,7 @@ describe("Real Estate NFT Marketplace", function () {
         .approve(marketplace.address, PROPERTY_PRICE);
 
       await expect(
-        marketplace.connect(seller).buyProperty(tokenId)
+        marketplace.connect(seller).buyProperty(tokenId),
       ).to.be.revertedWith("Cannot buy own property");
     });
 
@@ -456,13 +459,13 @@ describe("Real Estate NFT Marketplace", function () {
     it("should reject delisting by non-seller", async function () {
       await marketplace.connect(seller).listProperty(tokenId, PROPERTY_PRICE);
       await expect(
-        marketplace.connect(buyer).delistProperty(tokenId)
+        marketplace.connect(buyer).delistProperty(tokenId),
       ).to.be.revertedWith("Not the seller");
     });
 
     it("should reject buying unlisted property", async function () {
       await expect(
-        marketplace.connect(buyer).buyProperty(tokenId)
+        marketplace.connect(buyer).buyProperty(tokenId),
       ).to.be.revertedWith("Not listed");
     });
 
@@ -473,8 +476,49 @@ describe("Real Estate NFT Marketplace", function () {
 
     it("should reject fee > 10%", async function () {
       await expect(marketplace.setPlatformFee(1100)).to.be.revertedWith(
-        "Fee too high"
+        "Fee too high",
       );
+    });
+  });
+
+  describe("Marketplace wrapped NFTs", function () {
+    let wrappedTokenId;
+
+    beforeEach(async function () {
+      const MockBridgeMint = await ethers.getContractFactory("MockBridgeMint");
+      const mockBridge = await MockBridgeMint.deploy(propertyNFT.address);
+      await propertyNFT.setBridgeContract(mockBridge.address);
+
+      const tx = await propertyNFT.mintProperty(seller.address, "QmWrapSrc");
+      const receipt = await tx.wait();
+      const nativeId = receipt.events.find(
+        (e) => e.event === "PropertyMinted",
+      ).args.tokenId;
+
+      const wtx = await mockBridge.mintWrapped(
+        seller.address,
+        "ipfs://QmWrappedMeta",
+        SEPOLIA_SELECTOR_BN,
+        propertyNFT.address,
+        nativeId,
+      );
+      await wtx.wait();
+      wrappedTokenId = (await propertyNFT.totalSupply()).toNumber();
+
+      await propertyNFT.setBridgeContract(ccipBridgeSrc.address);
+    });
+
+    it("should list and sell wrapped NFT on the same chain", async function () {
+      expect(await propertyNFT.isWrapped(wrappedTokenId)).to.equal(true);
+      expect(await propertyNFT.isVerified(wrappedTokenId)).to.equal(false);
+
+      await marketplace
+        .connect(seller)
+        .listProperty(wrappedTokenId, PROPERTY_PRICE);
+      await brtToken.connect(buyer).approve(marketplace.address, PROPERTY_PRICE);
+      await marketplace.connect(buyer).buyProperty(wrappedTokenId);
+
+      expect(await propertyNFT.ownerOf(wrappedTokenId)).to.equal(buyer.address);
     });
   });
 
@@ -495,23 +539,22 @@ describe("Real Estate NFT Marketplace", function () {
     beforeEach(async function () {
       const tx = await propertyNFT.mintProperty(
         seller.address,
-        "QmBridgeProperty"
+        "QmBridgeProperty",
       );
       const receipt = await tx.wait();
-      tokenId = receipt.events.find(
-        (e) => e.event === "PropertyMinted"
-      ).args.tokenId;
+      tokenId = receipt.events.find((e) => e.event === "PropertyMinted").args
+        .tokenId;
 
       await verification.connect(validator1).vote(tokenId, true);
       await verification.connect(validator2).vote(tokenId, true);
 
       await ccipBridgeSrc.setTrustedBridge(
         AMOY_SELECTOR_BN,
-        ccipBridgeSrc.address
+        ccipBridgeSrc.address,
       );
       await ccipBridgeSrc.setTrustedBridge(
         SEPOLIA_SELECTOR_BN,
-        ccipBridgeSrc.address
+        ccipBridgeSrc.address,
       );
     });
 
@@ -520,7 +563,7 @@ describe("Real Estate NFT Marketplace", function () {
       expect(await ccipBridgeSrc.propertyNFT()).to.equal(propertyNFT.address);
       expect(await ccipBridgeSrc.linkToken()).to.equal(linkToken.address);
       expect(await ccipBridgeSrc.thisChainSelector()).to.equal(
-        SEPOLIA_SELECTOR_BN
+        SEPOLIA_SELECTOR_BN,
       );
       expect(await ccipBridgeSrc.getRouter()).to.equal(mockRouter.address);
     });
@@ -528,13 +571,13 @@ describe("Real Estate NFT Marketplace", function () {
     it("should set trusted bridge", async function () {
       await ccipBridgeSrc.setTrustedBridge(AMOY_SELECTOR_BN, buyer.address);
       expect(await ccipBridgeSrc.trustedBridges(AMOY_SELECTOR_BN)).to.equal(
-        buyer.address
+        buyer.address,
       );
     });
 
     it("should emit TrustedBridgeUpdated event", async function () {
       await expect(
-        ccipBridgeSrc.setTrustedBridge(AMOY_SELECTOR_BN, buyer.address)
+        ccipBridgeSrc.setTrustedBridge(AMOY_SELECTOR_BN, buyer.address),
       )
         .to.emit(ccipBridgeSrc, "TrustedBridgeUpdated")
         .withArgs(AMOY_SELECTOR_BN, buyer.address);
@@ -544,7 +587,7 @@ describe("Real Estate NFT Marketplace", function () {
       await expect(
         ccipBridgeSrc
           .connect(buyer)
-          .setTrustedBridge(AMOY_SELECTOR_BN, buyer.address)
+          .setTrustedBridge(AMOY_SELECTOR_BN, buyer.address),
       ).to.be.reverted;
     });
 
@@ -556,7 +599,7 @@ describe("Real Estate NFT Marketplace", function () {
       await expect(
         ccipBridgeSrc
           .connect(buyer)
-          .crossChainBuyFromListing(fakeSel, tokenId, amount)
+          .crossChainBuyFromListing(fakeSel, tokenId, amount),
       ).to.be.revertedWith("Untrusted listing chain");
     });
 
@@ -566,7 +609,7 @@ describe("Real Estate NFT Marketplace", function () {
       await expect(
         ccipBridgeSrc
           .connect(validator1)
-          .crossChainBuyFromListing(AMOY_SELECTOR_BN, tokenId, amount)
+          .crossChainBuyFromListing(AMOY_SELECTOR_BN, tokenId, amount),
       ).to.be.revertedWith("Not a user");
     });
 
@@ -581,7 +624,7 @@ describe("Real Estate NFT Marketplace", function () {
       const receipt = await tx.wait();
 
       const fulfilled = receipt.events.find(
-        (e) => e.event === "CrossChainBuyFulfilled"
+        (e) => e.event === "CrossChainBuyFulfilled",
       );
       expect(fulfilled, "CrossChainBuyFulfilled").to.be.ok;
       const wrappedId = fulfilled.args.wrappedTokenId;
@@ -590,7 +633,7 @@ describe("Real Estate NFT Marketplace", function () {
 
       const fee = amount.mul(200).div(10000);
       expect(await brtToken.balanceOf(seller.address)).to.equal(
-        MINT_AMOUNT.add(amount.sub(fee))
+        MINT_AMOUNT.add(amount.sub(fee)),
       );
     });
 
@@ -605,10 +648,10 @@ describe("Real Estate NFT Marketplace", function () {
       const receipt = await tx.wait();
 
       expect(
-        receipt.events.some((e) => e.event === "CCIPMessageReceived")
+        receipt.events.some((e) => e.event === "CCIPMessageReceived"),
       ).to.equal(true);
       const fulfilled = receipt.events.find(
-        (e) => e.event === "CrossChainBuyFulfilled"
+        (e) => e.event === "CrossChainBuyFulfilled",
       );
       expect(fulfilled).to.be.ok;
       const wrappedId = fulfilled.args.wrappedTokenId;
@@ -623,7 +666,7 @@ describe("Real Estate NFT Marketplace", function () {
       await expect(
         ccipBridgeSrc
           .connect(buyer)
-          .crossChainBuyFromListing(AMOY_SELECTOR_BN, tokenId, amount)
+          .crossChainBuyFromListing(AMOY_SELECTOR_BN, tokenId, amount),
       ).to.emit(ccipBridgeSrc, "CrossChainBuyInitiated");
     });
 
@@ -637,8 +680,8 @@ describe("Real Estate NFT Marketplace", function () {
           .crossChainBuyFromListing(
             AMOY_SELECTOR_BN,
             tokenId,
-            ethers.utils.parseEther("999")
-          )
+            ethers.utils.parseEther("999"),
+          ),
       ).to.be.reverted;
     });
 
@@ -648,7 +691,7 @@ describe("Real Estate NFT Marketplace", function () {
       await expect(
         ccipBridgeSrc
           .connect(buyer)
-          .crossChainBuyFromListing(AMOY_SELECTOR_BN, tokenId, amount)
+          .crossChainBuyFromListing(AMOY_SELECTOR_BN, tokenId, amount),
       ).to.be.reverted;
     });
 
@@ -662,9 +705,7 @@ describe("Real Estate NFT Marketplace", function () {
       await ccipBridgeSrc.withdrawETH();
       const balAfter = await ethers.provider.getBalance(owner.address);
 
-      expect(balAfter).to.be.gt(
-        balBefore.sub(ethers.utils.parseEther("0.01"))
-      );
+      expect(balAfter).to.be.gt(balBefore.sub(ethers.utils.parseEther("0.01")));
     });
 
     it("should accept ETH via receive", async function () {

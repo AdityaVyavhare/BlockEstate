@@ -23,6 +23,7 @@ interface IMarketBRT {
 interface IMarketPropertyNFT {
     function ownerOf(uint256 tokenId) external view returns (address);
     function isVerified(uint256 tokenId) external view returns (bool);
+    function isWrapped(uint256 tokenId) external view returns (bool);
     function transferProperty(address from, address to, uint256 tokenId) external;
 }
 
@@ -54,6 +55,11 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     /// @notice Address allowed to finalize cross-chain sales.
     address public bridgeContract;
+
+    /// @notice Native (non-wrapped) listings require validator verification; wrapped NFTs are listable without it.
+    function _isTradable(uint256 tokenId) internal view returns (bool) {
+        return propertyNFT.isVerified(tokenId) || propertyNFT.isWrapped(tokenId);
+    }
 
     // ── Events ──────────────────────────────────────────────
     event PropertyListed(
@@ -108,7 +114,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     // ── Listing Functions ───────────────────────────────────
 
-    /// @notice List a verified property for sale
+    /// @notice List a verified native property or a CCIP-wrapped property for sale
     function listProperty(uint256 tokenId, uint256 price) external {
         require(verification.isUser(msg.sender), "Not a user");
         require(price > 0, "Price must be > 0");
@@ -116,7 +122,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
             propertyNFT.ownerOf(tokenId) == msg.sender,
             "Not the owner"
         );
-        require(propertyNFT.isVerified(tokenId), "Property not verified");
+        require(_isTradable(tokenId), "Not tradable");
         require(!listings[tokenId].active, "Already listed");
 
         listings[tokenId] = Listing({
@@ -153,7 +159,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         // Integrity checks in case ownership/listing changed after listing.
         require(propertyNFT.ownerOf(tokenId) == seller, "Seller no longer owns NFT");
-        require(propertyNFT.isVerified(tokenId), "Property not verified");
+        require(_isTradable(tokenId), "Not tradable");
 
         // Calculate platform fee
         uint256 fee = (price * platformFeeBps) / 10000;
@@ -196,7 +202,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         address seller = listing.seller;
         require(seller != remoteBuyer, "Invalid buyer");
         require(propertyNFT.ownerOf(tokenId) == seller, "Seller no longer owns NFT");
-        require(propertyNFT.isVerified(tokenId), "Property not verified");
+        require(_isTradable(tokenId), "Not tradable");
 
         listing.active = false;
 

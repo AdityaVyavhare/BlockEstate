@@ -17,12 +17,15 @@ require("dotenv").config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 if (!PRIVATE_KEY) {
-  throw new Error("Set PRIVATE_KEY in .env (your MetaMask account private key)");
+  throw new Error(
+    "Set PRIVATE_KEY in .env (your MetaMask account private key)",
+  );
 }
 
 // LINK token addresses for CCIP fee payment (testnet)
 const LINK_ADDRESSES = {
-  sepolia: process.env.SEPOLIA_LINK || "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+  sepolia:
+    process.env.SEPOLIA_LINK || "0x779877A7B0D9E8603169DdbD7836e478b4624789",
   amoy: process.env.AMOY_LINK || "0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904",
 };
 
@@ -35,8 +38,7 @@ const NETWORKS = {
     ccipRouter:
       process.env.SEPOLIA_CCIP_ROUTER ||
       "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59",
-    chainSelector:
-      process.env.SEPOLIA_CHAIN_SELECTOR || "16015286601757825753",
+    chainSelector: process.env.SEPOLIA_CHAIN_SELECTOR || "16015286601757825753",
     linkToken: LINK_ADDRESSES.sepolia,
   },
   amoy: {
@@ -47,8 +49,7 @@ const NETWORKS = {
     ccipRouter:
       process.env.AMOY_CCIP_ROUTER ||
       "0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2",
-    chainSelector:
-      process.env.AMOY_CHAIN_SELECTOR || "16281711391670634445",
+    chainSelector: process.env.AMOY_CHAIN_SELECTOR || "16281711391670634445",
     linkToken: LINK_ADDRESSES.amoy,
   },
 };
@@ -86,7 +87,10 @@ function bnMax(a, b) {
 
 function clampAmoyGas(gas) {
   return {
-    maxPriorityFeePerGas: bnMax(gas.maxPriorityFeePerGas, AMOY_MIN_PRIORITY_WEI),
+    maxPriorityFeePerGas: bnMax(
+      gas.maxPriorityFeePerGas,
+      AMOY_MIN_PRIORITY_WEI,
+    ),
     maxFeePerGas: bnMax(gas.maxFeePerGas, AMOY_MIN_MAX_FEE_WEI),
   };
 }
@@ -106,7 +110,7 @@ async function fetchAmoyGas() {
           resolve({
             maxPriorityFeePerGas: ethers.utils.parseUnits(
               String(priorityFee),
-              "gwei"
+              "gwei",
             ),
             maxFeePerGas: ethers.utils.parseUnits(String(maxFee), "gwei"),
           });
@@ -122,7 +126,7 @@ async function fundBridgeLinkIfPossible(
   bridgeAddress,
   linkTokenAddress,
   gasOverrides,
-  networkName
+  networkName,
 ) {
   const amountStr = process.env.FUND_BRIDGE_LINK_AMOUNT || "0.5";
   const amount = ethers.utils.parseEther(amountStr);
@@ -131,11 +135,11 @@ async function fundBridgeLinkIfPossible(
   if (bal.lt(amount)) {
     console.warn(
       `  [!] Skipping auto LINK fund on ${networkName}: need ${ethers.utils.formatEther(
-        amount
+        amount,
       )} LINK, have ${ethers.utils.formatEther(
-        bal
+        bal,
       )}. Fund the deployer wallet with testnet LINK, then run:\n` +
-        `      npx hardhat run scripts/fundBridgeLink.js --network ${networkName}`
+        `      npx hardhat run scripts/fundBridgeLink.js --network ${networkName}`,
     );
     return;
   }
@@ -145,13 +149,19 @@ async function fundBridgeLinkIfPossible(
     const txA = await link.approve(
       bridgeAddress,
       ethers.constants.MaxUint256,
-      gasOverrides
+      gasOverrides,
     );
     await txA.wait();
   }
-  const bridge = new ethers.Contract(bridgeAddress, CCIP_BRIDGE_FUND_ABI, wallet);
+  const bridge = new ethers.Contract(
+    bridgeAddress,
+    CCIP_BRIDGE_FUND_ABI,
+    wallet,
+  );
   console.log(
-    `  Funding CCIPBridge with ${ethers.utils.formatEther(amount)} LINK on ${networkName}...`
+    `  Funding CCIPBridge with ${ethers.utils.formatEther(
+      amount,
+    )} LINK on ${networkName}...`,
   );
   const txF = await bridge.fundReturnLink(amount, gasOverrides);
   await txF.wait();
@@ -167,19 +177,19 @@ async function getGasOverrides(networkName) {
     console.log(
       `    maxFeePerGas:         ${ethers.utils.formatUnits(
         gas.maxFeePerGas,
-        "gwei"
-      )} gwei`
+        "gwei",
+      )} gwei`,
     );
     console.log(
       `    maxPriorityFeePerGas: ${ethers.utils.formatUnits(
         gas.maxPriorityFeePerGas,
-        "gwei"
-      )} gwei\n`
+        "gwei",
+      )} gwei\n`,
     );
     return { ...base, ...gas };
   } catch (e) {
     console.log(
-      `  Gas Station API failed (${e.message}), using 30 gwei fallback\n`
+      `  Gas Station API failed (${e.message}), using 30 gwei fallback\n`,
     );
     return {
       ...base,
@@ -195,11 +205,11 @@ async function getGasOverrides(networkName) {
 function loadArtifact(contractName) {
   const artifactPath = path.resolve(
     __dirname,
-    `../artifacts/contracts/${contractName}.sol/${contractName}.json`
+    `../artifacts/contracts/${contractName}.sol/${contractName}.json`,
   );
   if (!fs.existsSync(artifactPath)) {
     throw new Error(
-      `Artifact not found: ${artifactPath}. Run "npx hardhat compile" first.`
+      `Artifact not found: ${artifactPath}. Run "npx hardhat compile" first.`,
     );
   }
   return JSON.parse(fs.readFileSync(artifactPath, "utf8"));
@@ -210,14 +220,14 @@ async function deployContract(
   wallet,
   contractName,
   args = [],
-  gasOverrides = {}
+  gasOverrides = {},
 ) {
   const overrides = { gasLimit: DEPLOY_GAS_LIMIT, ...gasOverrides };
   const artifact = loadArtifact(contractName);
   const factory = new ethers.ContractFactory(
     artifact.abi,
     artifact.bytecode,
-    wallet
+    wallet,
   );
   try {
     const contract = await factory.deploy(...args, overrides);
@@ -231,7 +241,9 @@ async function deployContract(
       err.receipt?.status === 0
         ? " (tx mined but reverted — check constructor args / router address)"
         : "";
-    throw new Error(`${contractName} deploy failed: ${msg}${receiptHint}${extra}`);
+    throw new Error(
+      `${contractName} deploy failed: ${msg}${receiptHint}${extra}`,
+    );
   }
 }
 
@@ -250,12 +262,12 @@ async function deployToNetwork(networkConfig) {
 
   console.log(`  Deployer:  ${wallet.address}`);
   console.log(
-    `  Balance:   ${ethers.utils.formatEther(balance)} ${nativeToken}\n`
+    `  Balance:   ${ethers.utils.formatEther(balance)} ${nativeToken}\n`,
   );
 
   if (balance.eq(0)) {
     throw new Error(
-      `No balance on ${name}. Fund ${wallet.address} with ${nativeToken} first.`
+      `No balance on ${name}. Fund ${wallet.address} with ${nativeToken} first.`,
     );
   }
 
@@ -267,10 +279,13 @@ async function deployToNetwork(networkConfig) {
   const minRequired = ethers.BigNumber.from(gasLimit).mul(maxFee);
   if (balance.lt(minRequired)) {
     throw new Error(
-      `Insufficient funds on ${name}. Need ~${ethers.utils.formatEther(minRequired)} ${nativeToken} for deploy, have ${ethers.utils.formatEther(balance)}. Fund ${wallet.address}.`
+      `Insufficient funds on ${name}. Need ~${ethers.utils.formatEther(
+        minRequired,
+      )} ${nativeToken} for deploy, have ${ethers.utils.formatEther(
+        balance,
+      )}. Fund ${wallet.address}.`,
     );
   }
-
 
   // 1. BRTToken
   console.log("  [1/5] Deploying BRTToken...");
@@ -278,7 +293,7 @@ async function deployToNetwork(networkConfig) {
     wallet,
     "BRTToken",
     ["Bridge Token", "BRT"],
-    gasOverrides
+    gasOverrides,
   );
   console.log(`         -> ${brt.address}`);
 
@@ -293,14 +308,16 @@ async function deployToNetwork(networkConfig) {
     wallet,
     "Verification",
     [nft.address, brt.address],
-    gasOverrides
+    gasOverrides,
   );
   console.log(`         -> ${verifier.address}`);
 
   // Allow Verification contract to mint initial BRT on addUser/addValidator
   let tx = await brt.setBridge(verifier.address, true, gasOverrides);
   await tx.wait();
-  console.log("    -> BRTToken: authorized verification for initial role mints");
+  console.log(
+    "    -> BRTToken: authorized verification for initial role mints",
+  );
 
   // Add deployer as first validator
   tx = await verifier.addValidator(wallet.address, gasOverrides);
@@ -321,7 +338,9 @@ async function deployToNetwork(networkConfig) {
     } catch (e) {
       const msg = e?.reason || e?.message || String(e);
       if (msg.includes("Already a user")) {
-        console.log(`         -> Demo user ${addr} already registered — skipping`);
+        console.log(
+          `         -> Demo user ${addr} already registered — skipping`,
+        );
       } else {
         throw e;
       }
@@ -334,7 +353,7 @@ async function deployToNetwork(networkConfig) {
     wallet,
     "Marketplace",
     [brt.address, nft.address, verifier.address],
-    gasOverrides
+    gasOverrides,
   );
   console.log(`         -> ${market.address}`);
 
@@ -355,7 +374,7 @@ async function deployToNetwork(networkConfig) {
       chainSelectorBn,
       linkToken,
     ],
-    gasOverrides
+    gasOverrides,
   );
   console.log(`         -> ${bridge.address}`);
 
@@ -387,7 +406,7 @@ async function deployToNetwork(networkConfig) {
     bridge.address,
     linkToken,
     gasOverrides,
-    name
+    name,
   );
 
   // Save addresses for this network
@@ -436,7 +455,7 @@ async function main() {
   fs.writeFileSync(
     deployOutputPath,
     JSON.stringify(deploymentOutput, null, 2) + "\n",
-    "utf8"
+    "utf8",
   );
 
   // Wire cross-chain trusted bridges
@@ -446,24 +465,24 @@ async function main() {
 
   // On Sepolia bridge, trust Amoy bridge
   const sepoliaProvider = new ethers.providers.JsonRpcProvider(
-    NETWORKS.sepolia.rpc
+    NETWORKS.sepolia.rpc,
   );
   const sepoliaWallet = new ethers.Wallet(PRIVATE_KEY, sepoliaProvider);
   const sepoliaBridgeArtifact = loadArtifact("CCIPBridge");
   const sepoliaBridge = new ethers.Contract(
     sepoliaAddresses.CCIPBridge,
     sepoliaBridgeArtifact.abi,
-    sepoliaWallet
+    sepoliaWallet,
   );
 
   let txCross = await sepoliaBridge.setTrustedBridge(
     NETWORKS.amoy.chainSelector,
     amoyAddresses.CCIPBridge,
-    { gasLimit: TX_GAS_LIMIT }
+    { gasLimit: TX_GAS_LIMIT },
   );
   await txCross.wait();
   console.log(
-    `  Sepolia bridge trusts Amoy bridge: ${amoyAddresses.CCIPBridge}`
+    `  Sepolia bridge trusts Amoy bridge: ${amoyAddresses.CCIPBridge}`,
   );
 
   // On Amoy bridge, trust Sepolia bridge
@@ -473,17 +492,17 @@ async function main() {
   const amoyBridge = new ethers.Contract(
     amoyAddresses.CCIPBridge,
     sepoliaBridgeArtifact.abi,
-    amoyWallet
+    amoyWallet,
   );
 
   txCross = await amoyBridge.setTrustedBridge(
     NETWORKS.sepolia.chainSelector,
     sepoliaAddresses.CCIPBridge,
-    amoyGas
+    amoyGas,
   );
   await txCross.wait();
   console.log(
-    `  Amoy bridge trusts Sepolia bridge: ${sepoliaAddresses.CCIPBridge}`
+    `  Amoy bridge trusts Sepolia bridge: ${sepoliaAddresses.CCIPBridge}`,
   );
 
   // Summary
@@ -512,7 +531,9 @@ function formatDeployError(err) {
   const msg = err.reason || err.message || String(err);
   const data = err.data ? `\n  data: ${err.data}` : "";
   const shortMessage = err.shortMessage || "";
-  return `Deployment failed: ${msg}${shortMessage ? ` (${shortMessage})` : ""}${data}`;
+  return `Deployment failed: ${msg}${
+    shortMessage ? ` (${shortMessage})` : ""
+  }${data}`;
 }
 
 main().catch((error) => {
